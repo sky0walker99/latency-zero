@@ -5,15 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Team Latency Zero - Drone Innovation</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <style>
         .hero-section {
             background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
-                        url('./IMG_20240707_162642_888.jpg') center/cover;
+                        url('./images/main_bg.jpg') center/cover;
             height: 80vh;
+        }
+        .error-message {
+            color: #dc2626;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        .success-message {
+            color: #059669;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
         }
     </style>
 </head>
 <body class="font-sans">
+
     <!-- Navigation -->
     <nav class="bg-gray-900 text-white fixed w-full z-10">
         <div class="container mx-auto px-6 py-4">
@@ -49,7 +61,7 @@
             <h2 class="text-4xl font-bold text-center mb-12">About Us</h2>
             <div class="grid md:grid-cols-2 gap-12 items-center">
                 <div>
-                    <img src="./logo.jpg" alt="Team working on drone" class="rounded-lg shadow-lg">
+                    <img src="./images/logo.jpg" alt="Team working on drone" class="rounded-lg shadow-lg">
                 </div>
                 <div>
                     <h3 class="text-2xl font-bold mb-4">Innovation is Our Mission</h3>
@@ -88,7 +100,7 @@
             <div class="grid md:grid-cols-3 gap-8">
                 
                 <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                    <img src="./new-logo.jpg" alt="Autonomous Drone" class="w-full">
+                    <img src="./images/new-logo.jpg" alt="Autonomous Drone" class="w-full">
                     <div class="p-6">
                         <h3 class="text-xl font-bold mb-2">Autonomous Drone</h3>
                         <p class="text-gray-600">Self-flying drone with advanced AI capabilities.</p>
@@ -104,24 +116,38 @@
         <div class="container mx-auto px-6">
             <h2 class="text-4xl font-bold text-center mb-12">Contact Us</h2>
             <div class="max-w-2xl mx-auto">
-                <form class="space-y-6">
+                <form id="contactForm" class="space-y-6">
                     <div>
                         <label class="block text-gray-700 mb-2">Name</label>
-                        <input type="text" class="w-full px-4 py-3 rounded-lg border focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                        <input type="text" id="name" name="from_name" required
+                            class="w-full px-4 py-3 rounded-lg border focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                        <div class="error-message" id="nameError"></div>
                     </div>
                     <div>
                         <label class="block text-gray-700 mb-2">Email</label>
-                        <input type="email" class="w-full px-4 py-3 rounded-lg border focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                        <input type="email" id="email" name="from_email" required
+                            class="w-full px-4 py-3 rounded-lg border focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                        <div class="error-message" id="emailError"></div>
                     </div>
                     <div>
                         <label class="block text-gray-700 mb-2">Message</label>
-                        <textarea class="w-full px-4 py-3 rounded-lg border focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition" rows="5"></textarea>
+                        <textarea id="message" name="message" required
+                            class="w-full px-4 py-3 rounded-lg border focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition" 
+                            rows="5"></textarea>
+                        <div class="error-message" id="messageError"></div>
                     </div>
-                    <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition duration-300">Send Message</button>
+                    <button type="submit" id="submitButton"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition duration-300">
+                        Send Message
+                    </button>
+                    <div id="successMessage" class="success-message text-center hidden">
+                        Thank you for your message! We'll get back to you soon.
+                    </div>
                 </form>
             </div>
         </div>
     </section>
+    
 
     <!-- Footer -->
     <footer class="bg-gray-900 text-white py-12">
@@ -155,5 +181,105 @@
             </div>
         </div>
     </footer>
+  
+   
+    <script>
+        (function() {
+            // Check if config exists
+            if (typeof emailConfig === 'undefined') {
+                console.error('Email configuration not found. Please check config.js file.');
+                return;
+            }
+
+            // Initialize EmailJS with config
+            emailjs.init(emailConfig.PUBLIC_KEY);
+
+            const form = document.getElementById('contactForm');
+            const submitButton = document.getElementById('submitButton');
+            const successMessage = document.getElementById('successMessage');
+
+            // Your existing functions remain the same
+            function showLoading() {
+                submitButton.disabled = true;
+                submitButton.innerHTML = 'Sending...';
+                submitButton.classList.add('opacity-75', 'cursor-not-allowed');
+            }
+
+            function hideLoading() {
+                submitButton.disabled = false;
+                submitButton.innerHTML = 'Send Message';
+                submitButton.classList.remove('opacity-75', 'cursor-not-allowed');
+            }
+
+            function showSuccess() {
+                successMessage.classList.remove('hidden');
+                form.reset();
+                setTimeout(() => {
+                    successMessage.classList.add('hidden');
+                }, 5000);
+            }
+
+            function validateEmail(email) {
+                const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return regex.test(email);
+            }
+
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                
+                // Reset error messages
+                document.querySelectorAll('.error-message').forEach(error => error.textContent = '');
+                successMessage.classList.add('hidden');
+                
+                // Get form values
+                const name = document.getElementById('name').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const message = document.getElementById('message').value.trim();
+                
+                // Validate fields
+                let hasError = false;
+                
+                if (name.length < 2) {
+                    document.getElementById('nameError').textContent = 'Name must be at least 2 characters long';
+                    hasError = true;
+                }
+                
+                if (!validateEmail(email)) {
+                    document.getElementById('emailError').textContent = 'Please enter a valid email address';
+                    hasError = true;
+                }
+                
+                if (message.length < 10) {
+                    document.getElementById('messageError').textContent = 'Message must be at least 10 characters long';
+                    hasError = true;
+                }
+
+                if (hasError) return;
+
+                showLoading();
+
+                // Send email using EmailJS with config
+                emailjs.send(
+                    emailConfig.SERVICE_ID,
+                    emailConfig.TEMPLATE_ID,
+                    {
+                        from_name: name,
+                        from_email: email,
+                        message: message
+                    }
+                )
+                .then(function() {
+                    hideLoading();
+                    showSuccess();
+                })
+                .catch(function(error) {
+                    hideLoading();
+                    alert('Failed to send message. Please try again.');
+                    console.error('EmailJS Error:', error);
+                });
+            });
+        })();
+    </script>
+    
 </body>
 </html>
